@@ -1,0 +1,290 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="&#3619;&#3632;&#3618;&#3632;&#3626;&#3656;&#3591;&#3586;&#3629;&#3591;">
+<title>&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3626;&#3656;&#3591;&#3586;&#3629;&#3591; &#8211; &#3619;&#3657;&#3634;&#3609;&#3594;&#3633;&#3618;&#3617;&#3591;&#3588;&#3621;</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#182533; --card2:#1e2f41; --line:#2b3d52;
+    --text:#eaf1f8; --muted:#93a4b8; --accent:#ffb020; --accent2:#33c46b;
+    --blue:#3aa0ff; --danger:#ff6b6b; --radius:18px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2f6; --card:#ffffff; --card2:#f4f7fa; --line:#dce4ec;
+      --text:#16202b; --muted:#5f7085; }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Sarabun",sans-serif;
+    background:var(--bg); color:var(--text);
+    padding:16px 14px 40px; max-width:520px; margin:0 auto; -webkit-text-size-adjust:100%;
+  }
+  header{display:flex; align-items:center; gap:10px; margin:4px 2px 16px}
+  header .logo{font-size:26px}
+  header h1{font-size:17px; margin:0; line-height:1.25}
+  header .sub{font-size:12px; color:var(--muted); margin-top:2px}
+
+  .origin{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted);
+    background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:14px;}
+  .origin b{color:var(--text); font-weight:600}
+
+  label.fld{display:block; font-size:13px; color:var(--muted); margin:0 2px 6px}
+  input[type=text], input[type=number], input[type=password]{
+    width:100%; font-size:17px; color:var(--text);
+    background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:14px; outline:none;}
+  input:focus{border-color:var(--accent)}
+  button.go{width:100%; margin-top:10px; font-size:16px; font-weight:700; color:#1a1200;
+    background:var(--accent); border:0; border-radius:14px; padding:14px; cursor:pointer;}
+  button.go:active{transform:scale(.99)}
+  button.go:disabled{opacity:.5}
+  .hint{font-size:11.5px; color:var(--muted); margin:8px 2px 0; line-height:1.5}
+
+  .rate-row{display:flex; align-items:center; gap:10px; margin-top:14px}
+  .rate-row .rate-lbl{font-size:13px; color:var(--muted); flex:1}
+  .rate-row input{max-width:120px; font-size:15px; padding:10px 12px}
+
+  #result{margin-top:18px}
+  .result-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 16px; margin-bottom:12px; animation:pop .18s ease;}
+  @keyframes pop{from{opacity:0; transform:translateY(6px)}to{opacity:1;transform:none}}
+  .found-name{font-size:15px; font-weight:600; margin-bottom:2px; word-break:break-word}
+  .found-sub{font-size:12.5px; color:var(--muted); margin-bottom:14px; word-break:break-word}
+
+  .metrics{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .metric{background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:14px}
+  .metric .k{font-size:12px; color:var(--muted); display:flex; gap:5px; align-items:center}
+  .metric .v{font-size:26px; font-weight:800; margin-top:4px; line-height:1}
+  .metric .u{font-size:13px; color:var(--muted); font-weight:600; margin-left:3px}
+  .cost{grid-column:1 / -1; background:rgba(58,160,255,.10); border-color:rgba(58,160,255,.35)}
+  .cost .v{color:var(--blue)}
+
+  .maplink{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px;
+    text-decoration:none; font-size:15px; font-weight:600; color:var(--blue);
+    background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:13px;}
+
+  .msg{padding:14px 16px; border-radius:14px; font-size:14px; line-height:1.5}
+  .msg.err{background:rgba(255,107,107,.12); color:var(--danger); border:1px solid rgba(255,107,107,.3)}
+  .msg.load{background:var(--card2); color:var(--muted); border:1px solid var(--line); text-align:center}
+  .spin{display:inline-block; width:16px; height:16px; border:2.5px solid var(--line);
+    border-top-color:var(--accent); border-radius:50%; animation:sp .7s linear infinite; vertical-align:-3px; margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .hist-h{display:flex; justify-content:space-between; align-items:center; margin:22px 2px 8px}
+  .hist-h span{font-size:13px; color:var(--muted); font-weight:600}
+  .hist-h button{background:none; border:0; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer}
+  .chip{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:8px; cursor:pointer;}
+  .chip:active{background:var(--card2)}
+  .chip .q{font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .chip .d{font-size:13px; font-weight:700; color:var(--accent); flex:0 0 auto}
+  footer{margin-top:26px; text-align:center; font-size:11px; color:var(--muted); line-height:1.6}
+
+  /* setup card */
+  .setup{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px 16px}
+  .setup h2{font-size:16px; margin:0 0 6px}
+  .setup p{font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 12px}
+  .setup ol{font-size:13px; color:var(--muted); line-height:1.7; padding-left:20px; margin:0 0 14px}
+  .setup a{color:var(--blue)}
+  .settings-link{display:block; text-align:center; margin-top:16px; font-size:12px; color:var(--muted);
+    text-decoration:underline; cursor:pointer}
+  .pac-container{z-index:99999 !important; border-radius:12px; margin-top:4px}
+</style>
+
+<header>
+  <div class="logo">&#127959;&#65039;</div>
+  <div>
+    <h1>&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3626;&#3656;&#3591;&#3586;&#3629;&#3591;</h1>
+    <div class="sub">&#3619;&#3657;&#3634;&#3609;&#3594;&#3633;&#3618;&#3617;&#3591;&#3588;&#3621; &#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660; &#183; &#3624;&#3619;&#3637;&#3626;&#3632;&#3648;&#3585;&#3625;</div>
+  </div>
+</header>
+
+<!-- ===== SETUP (shown when no API key) ===== -->
+<div id="setup" class="setup" style="display:none">
+  <h2>&#128273; &#3605;&#3633;&#3657;&#3591;&#3588;&#3656;&#3634;&#3588;&#3619;&#3633;&#3657;&#3591;&#3649;&#3619;&#3585;</h2>
+  <p>&#3649;&#3629;&#3611;&#3609;&#3637;&#3657;&#3651;&#3594;&#3657; Google Maps &#3648;&#3614;&#3639;&#3656;&#3629;&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609;&#3649;&#3621;&#3632;&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3607;&#3634;&#3591;&#3649;&#3617;&#3656;&#3609;&#3654; &#8212; &#3651;&#3626;&#3656; <b>Google Maps API Key</b> &#3588;&#3619;&#3633;&#3657;&#3591;&#3648;&#3604;&#3637;&#3618;&#3623; (&#3648;&#3585;&#3655;&#3610;&#3652;&#3623;&#3657;&#3651;&#3609;&#3648;&#3588;&#3619;&#3639;&#3656;&#3629;&#3591;&#3609;&#3637;&#3657;&#3648;&#3607;&#3656;&#3634;&#3609;&#3633;&#3657;&#3609;)</p>
+  <input type="password" id="keyInput" placeholder="&#3623;&#3634;&#3591; API Key &#3607;&#3637;&#3656;&#3609;&#3637;&#3656; (&#3586;&#3638;&#3657;&#3609;&#3605;&#3657;&#3609; AIza...)">
+  <button class="go" id="saveKey">&#3610;&#3633;&#3609;&#3607;&#3638;&#3585;&#3649;&#3621;&#3632;&#3648;&#3619;&#3636;&#3656;&#3617;&#3651;&#3594;&#3657;&#3591;&#3634;&#3609;</button>
+  <p style="margin-top:14px; font-size:12px">&#3618;&#3633;&#3591;&#3652;&#3617;&#3656;&#3617;&#3637; Key? &#3648;&#3611;&#3636;&#3604;&#3588;&#3641;&#3656;&#3617;&#3639;&#3629;&#3626;&#3619;&#3657;&#3634;&#3591;&#3615;&#3619;&#3637;&#3607;&#3637;&#3621;&#3632;&#3586;&#3633;&#3657;&#3609;&#3651;&#3609;&#3652;&#3615;&#3621;&#3660; <b>&#3588;&#3641;&#3656;&#3617;&#3639;&#3629;&#3626;&#3619;&#3657;&#3634;&#3591;-API-KEY.md</b> &#3607;&#3637;&#3656;&#3649;&#3609;&#3610;&#3617;&#3634;</p>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div id="main" style="display:none">
+  <div class="origin">&#128205; <span>&#3592;&#3640;&#3604;&#3648;&#3619;&#3636;&#3656;&#3617;&#3605;&#3657;&#3609;: <b>&#3619;&#3657;&#3634;&#3609;&#3594;&#3633;&#3618;&#3617;&#3591;&#3588;&#3621;</b> &#3605;.&#3604;&#3641;&#3609; &#3629;.&#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660;</span></div>
+
+  <label class="fld" for="q">&#3611;&#3621;&#3634;&#3618;&#3607;&#3634;&#3591; &#8212; &#3614;&#3636;&#3617;&#3614;&#3660;&#3594;&#3639;&#3656;&#3629;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609; / &#3627;&#3617;&#3641;&#3656; / &#3605;&#3635;&#3610;&#3621; &#3649;&#3621;&#3657;&#3623;&#3648;&#3621;&#3639;&#3629;&#3585;&#3592;&#3634;&#3585;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</label>
+  <input type="text" id="q" inputmode="text" enterkeyhint="search" autocomplete="off"
+    placeholder="&#3648;&#3594;&#3656;&#3609; &#3610;&#3657;&#3634;&#3609;&#3650;&#3609;&#3609;&#3626;&#3633;&#3591; &#3605;&#3635;&#3610;&#3621;&#3650;&#3609;&#3609;&#3626;&#3633;&#3591; &#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660;">
+  <button class="go" id="go">&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3607;&#3634;&#3591;</button>
+  <div class="hint">&#3614;&#3636;&#3617;&#3614;&#3660;&#3616;&#3634;&#3625;&#3634;&#3652;&#3607;&#3618;&#3652;&#3604;&#3657;&#3648;&#3621;&#3618; &#3619;&#3632;&#3610;&#3610;&#3592;&#3632;&#3648;&#3604;&#3657;&#3591;&#3594;&#3639;&#3656;&#3629;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609;&#3651;&#3627;&#3657;&#3648;&#3621;&#3639;&#3629;&#3585; &#183; &#3588;&#3619;&#3629;&#3610;&#3588;&#3621;&#3640;&#3617;&#3607;&#3633;&#3656;&#3623;&#3652;&#3607;&#3618; (&#3648;&#3609;&#3657;&#3609;&#3649;&#3606;&#3610;&#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660;&#8211;&#3624;&#3619;&#3637;&#3626;&#3632;&#3648;&#3585;&#3625;&#8211;&#3629;&#3640;&#3610;&#3621;&#3631;)</div>
+
+  <div class="rate-row">
+    <span class="rate-lbl">&#3648;&#3619;&#3605;&#3588;&#3656;&#3634;&#3626;&#3656;&#3591; (&#3610;&#3634;&#3607;/&#3585;&#3617;.) &#8212; &#3651;&#3626;&#3656;&#3606;&#3657;&#3634;&#3629;&#3618;&#3634;&#3585;&#3651;&#3627;&#3657;&#3588;&#3636;&#3604;&#3588;&#3656;&#3634;&#3626;&#3656;&#3591;&#3651;&#3627;&#3657;</span>
+    <input type="number" id="rate" inputmode="decimal" placeholder="&#3648;&#3594;&#3656;&#3609; 15" min="0" step="0.5">
+  </div>
+
+  <div id="result"></div>
+
+  <div id="histWrap" style="display:none">
+    <div class="hist-h"><span>&#3588;&#3657;&#3609;&#3621;&#3656;&#3634;&#3626;&#3640;&#3604;</span><button id="clearHist">&#3621;&#3657;&#3634;&#3591;</button></div>
+    <div id="hist"></div>
+  </div>
+
+  <span class="settings-link" id="changeKey">&#9881;&#65038; &#3648;&#3611;&#3621;&#3637;&#3656;&#3618;&#3609; API Key</span>
+</div>
+
+<footer>
+  &#3619;&#3632;&#3618;&#3632;&#3607;&#3634;&#3591;/&#3648;&#3623;&#3621;&#3634;&#3649;&#3610;&#3610; "&#3586;&#3633;&#3610;&#3619;&#3606;&#3592;&#3619;&#3636;&#3591;" &#3592;&#3634;&#3585; Google Maps<br>
+  &#3619;&#3657;&#3634;&#3609;&#3594;&#3633;&#3618;&#3617;&#3591;&#3588;&#3621; &#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660; &#183; &#3648;&#3604;&#3650;&#3617;&#3626;&#3635;&#3627;&#3619;&#3633;&#3610;&#3609;&#3635;&#3648;&#3626;&#3609;&#3629;
+</footer>
+
+<script>
+const ORIGIN = { lat: 15.1059584, lng: 104.5785245 };
+const REGION = { south:14.55, west:104.05, north:15.80, east:105.20 }; // bias autocomplete
+
+const $ = s => document.querySelector(s);
+let map, directionsSvc, autocomplete, chosenPlace = null;
+
+// ---------- key handling ----------
+function getKey(){ return localStorage.getItem('gmaps_key') || ''; }
+function boot(){
+  const k = getKey();
+  if(!k){ $('#setup').style.display='block'; $('#main').style.display='none'; return; }
+  loadGoogle(k);
+}
+$('#saveKey').addEventListener('click', ()=>{
+  const k = $('#keyInput').value.trim();
+  if(!k){ $('#keyInput').focus(); return; }
+  localStorage.setItem('gmaps_key', k);
+  location.reload();
+});
+$('#changeKey').addEventListener('click', ()=>{
+  if(confirm('\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 API Key?')){ localStorage.removeItem('gmaps_key'); location.reload(); }
+});
+
+// ---------- load Google Maps JS ----------
+function loadGoogle(key){
+  window.__gmapsFail = setTimeout(()=>{
+    $('#setup').style.display='block';
+    $('#setup').insertAdjacentHTML('afterbegin',
+      '<div class="msg err" style="margin-bottom:14px">\u26a0\ufe0f \u0e42\u0e2b\u0e25\u0e14 Google Maps \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u2014 \u0e15\u0e23\u0e27\u0e08\u0e27\u0e48\u0e32 API Key \u0e16\u0e39\u0e01\u0e15\u0e49\u0e2d\u0e07\u0e41\u0e25\u0e30\u0e40\u0e1b\u0e34\u0e14 Maps JavaScript API + Places API \u0e41\u0e25\u0e49\u0e27</div>');
+    $('#main').style.display='none';
+  }, 8000);
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}`
+        + `&libraries=places&language=th&region=TH&callback=initApp`;
+  s.async = true;
+  s.onerror = ()=>{ /* handled by timeout */ };
+  document.head.appendChild(s);
+}
+
+// ---------- init after Google ready ----------
+window.initApp = function(){
+  clearTimeout(window.__gmapsFail);
+  $('#setup').style.display='none';
+  $('#main').style.display='block';
+  directionsSvc = new google.maps.DirectionsService();
+
+  const bounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(REGION.south, REGION.west),
+    new google.maps.LatLng(REGION.north, REGION.east));
+  autocomplete = new google.maps.places.Autocomplete($('#q'), {
+    componentRestrictions:{ country:'th' },
+    bounds, fields:['name','formatted_address','geometry']
+  });
+  autocomplete.addListener('place_changed', ()=>{
+    const p = autocomplete.getPlace();
+    if(p && p.geometry){ chosenPlace = p; run(); }
+  });
+
+  $('#rate').value = localStorage.getItem('cm_rate') || '';
+  $('#rate').addEventListener('input', ()=> localStorage.setItem('cm_rate', $('#rate').value));
+  renderHist();
+};
+
+// ---------- helpers ----------
+function fmtEta(sec){
+  const min = Math.round(sec/60);
+  if(min < 60) return min + ' \u0e19\u0e32\u0e17\u0e35';
+  const h = Math.floor(min/60), mm = min%60;
+  return h + ' \u0e0a\u0e21.' + (mm? ' ' + mm + ' \u0e19\u0e32\u0e17\u0e35':'');
+}
+
+// ---------- main calc ----------
+let busy = false;
+function run(){
+  if(busy) return;
+  const p = chosenPlace;
+  if(!p || !p.geometry){
+    $('#result').innerHTML = `<div class="msg err">\u0e1e\u0e34\u0e21\u0e1e\u0e4c\u0e41\u0e25\u0e49\u0e27<b>\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e2b\u0e21\u0e39\u0e48\u0e1a\u0e49\u0e32\u0e19\u0e08\u0e32\u0e01\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48\u0e40\u0e14\u0e49\u0e07\u0e02\u0e36\u0e49\u0e19</b>\u0e01\u0e48\u0e2d\u0e19\u0e19\u0e30\u0e04\u0e23\u0e31\u0e1a</div>`;
+    return;
+  }
+  busy = true; $('#go').disabled = true;
+  $('#result').innerHTML = `<div class="msg load"><span class="spin"></span>\u0e01\u0e33\u0e25\u0e31\u0e07\u0e04\u0e33\u0e19\u0e27\u0e13\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07...</div>`;
+  const dest = p.geometry.location;
+  directionsSvc.route({
+    origin: ORIGIN, destination: dest, travelMode: google.maps.TravelMode.DRIVING
+  }, (res, status)=>{
+    busy = false; $('#go').disabled = false;
+    if(status !== 'OK' || !res.routes.length){
+      $('#result').innerHTML = `<div class="msg err">\u0e2b\u0e32\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 (${status}) \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07</div>`;
+      return;
+    }
+    const leg = res.routes[0].legs[0];
+    showResult(p, leg, dest);
+  });
+}
+
+function showResult(p, leg, dest){
+  const rate = parseFloat($('#rate').value);
+  const km = leg.distance.value/1000;
+  const cost = (rate>0)
+    ? `<div class="metric cost"><div class="k">\ud83d\udcb0 \u0e04\u0e48\u0e32\u0e2a\u0e48\u0e07\u0e42\u0e14\u0e22\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13 (${rate.toLocaleString('th-TH')} \u0e1a\u0e32\u0e17/\u0e01\u0e21.)</div>
+         <div class="v">${Math.round(km*rate).toLocaleString('th-TH')}<span class="u">\u0e1a\u0e32\u0e17</span></div></div>` : '';
+  const gmap = `https://www.google.com/maps/dir/?api=1&origin=${ORIGIN.lat},${ORIGIN.lng}`
+             + `&destination=${dest.lat()},${dest.lng()}&travelmode=driving`;
+  $('#result').innerHTML = `
+    <div class="result-card">
+      <div class="found-name">\ud83d\udccd ${p.name || '\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07'}</div>
+      <div class="found-sub">${p.formatted_address || ''}</div>
+      <div class="metrics">
+        <div class="metric"><div class="k">\ud83d\udccf \u0e23\u0e30\u0e22\u0e30\u0e17\u0e32\u0e07</div>
+          <div class="v">${leg.distance.text.replace(' \u0e01\u0e21.','').replace(' km','')}<span class="u">\u0e01\u0e21.</span></div></div>
+        <div class="metric"><div class="k">\u23f1\ufe0f \u0e40\u0e27\u0e25\u0e32\u0e42\u0e14\u0e22\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13</div>
+          <div class="v" style="font-size:20px">${fmtEta(leg.duration.value)}</div></div>
+        ${cost}
+      </div>
+      <a class="maplink" href="${gmap}" target="_blank" rel="noopener">\ud83d\uddfa\ufe0f \u0e40\u0e1b\u0e34\u0e14\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e43\u0e19 Google Maps</a>
+    </div>`;
+  saveHist({ q:(p.name||'') , addr:p.formatted_address||'', km:km.toFixed(1),
+             lat:dest.lat(), lng:dest.lng() });
+}
+
+// ---------- history ----------
+function getHist(){ try{ return JSON.parse(localStorage.getItem('cm_hist')||'[]'); }catch{ return []; } }
+function saveHist(item){
+  let h = getHist().filter(x=> x.q!==item.q || x.addr!==item.addr);
+  h.unshift(item); h = h.slice(0,8);
+  localStorage.setItem('cm_hist', JSON.stringify(h)); renderHist();
+}
+function renderHist(){
+  const h = getHist(), wrap = $('#histWrap'), box = $('#hist');
+  if(!h.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  box.innerHTML = h.map((x,i)=>`<div class="chip" data-i="${i}">
+      <span class="q">${x.q||x.addr}</span><span class="d">${x.km} \u0e01\u0e21.</span></div>`).join('');
+  box.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const x = getHist()[+c.dataset.i];
+      chosenPlace = { name:x.q, formatted_address:x.addr,
+        geometry:{ location:new google.maps.LatLng(x.lat, x.lng) } };
+      $('#q').value = x.q; run();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+}
+$('#clearHist').addEventListener('click', ()=>{ localStorage.removeItem('cm_hist'); renderHist(); });
+
+boot();
+</script>
