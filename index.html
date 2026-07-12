@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="&#3619;&#3632;&#3618;&#3632;&#3626;&#3656;&#3591;&#3586;&#3629;&#3591;">
@@ -105,6 +105,7 @@
   <h2>&#128273; &#3605;&#3633;&#3657;&#3591;&#3588;&#3656;&#3634;&#3588;&#3619;&#3633;&#3657;&#3591;&#3649;&#3619;&#3585;</h2>
   <p>&#3649;&#3629;&#3611;&#3609;&#3637;&#3657;&#3651;&#3594;&#3657; Google Maps &#3648;&#3614;&#3639;&#3656;&#3629;&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609;&#3649;&#3621;&#3632;&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3607;&#3634;&#3591;&#3649;&#3617;&#3656;&#3609;&#3654; &#8212; &#3651;&#3626;&#3656; <b>Google Maps API Key</b> &#3588;&#3619;&#3633;&#3657;&#3591;&#3648;&#3604;&#3637;&#3618;&#3623; (&#3648;&#3585;&#3655;&#3610;&#3652;&#3623;&#3657;&#3651;&#3609;&#3648;&#3588;&#3619;&#3639;&#3656;&#3629;&#3591;&#3609;&#3637;&#3657;&#3648;&#3607;&#3656;&#3634;&#3609;&#3633;&#3657;&#3609;)</p>
   <input type="password" id="keyInput" placeholder="&#3623;&#3634;&#3591; API Key &#3607;&#3637;&#3656;&#3609;&#3637;&#3656; (&#3586;&#3638;&#3657;&#3609;&#3605;&#3657;&#3609; AIza...)">
+  <button class="go" id="cancelKey" style="background:none;border:1.5px solid var(--line);color:var(--muted);display:none">&#3618;&#3585;&#3648;&#3621;&#3636;&#3585;</button>
   <button class="go" id="saveKey">&#3610;&#3633;&#3609;&#3607;&#3638;&#3585;&#3649;&#3621;&#3632;&#3648;&#3619;&#3636;&#3656;&#3617;&#3651;&#3594;&#3657;&#3591;&#3634;&#3609;</button>
   <p style="margin-top:14px; font-size:12px">&#3618;&#3633;&#3591;&#3652;&#3617;&#3656;&#3617;&#3637; Key? &#3648;&#3611;&#3636;&#3604;&#3588;&#3641;&#3656;&#3617;&#3639;&#3629;&#3626;&#3619;&#3657;&#3634;&#3591;&#3615;&#3619;&#3637;&#3607;&#3637;&#3621;&#3632;&#3586;&#3633;&#3657;&#3609;&#3651;&#3609;&#3652;&#3615;&#3621;&#3660; <b>&#3588;&#3641;&#3656;&#3617;&#3639;&#3629;&#3626;&#3619;&#3657;&#3634;&#3591;-API-KEY.md</b> &#3607;&#3637;&#3656;&#3649;&#3609;&#3610;&#3617;&#3634;</p>
 </div>
@@ -144,6 +145,8 @@ const ORIGIN = { lat: 15.1059584, lng: 104.5785245 };
 const REGION = { south:14.55, west:104.05, north:15.80, east:105.20 }; // bias autocomplete
 
 const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 let map, directionsSvc, autocomplete, chosenPlace = null;
 
 // ---------- key handling ----------
@@ -156,13 +159,27 @@ function boot(){
 }
 $('#saveKey').addEventListener('click', ()=>{
   const k = $('#keyInput').value.trim();
-  if(!k){ $('#keyInput').focus(); return; }
-  localStorage.setItem('gmaps_key', k);
+  if(k) lsSet('gmaps_key', k); else localStorage.removeItem('gmaps_key');
   location.reload();
 });
 $('#changeKey').addEventListener('click', ()=>{
-  if(confirm('\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 API Key?')){ localStorage.removeItem('gmaps_key'); location.reload(); }
+  $('#main').style.display='none';
+  $('#cancelKey').style.display='block';
+  $('#setup').style.display='block';
+  $('#keyInput').value = localStorage.getItem('gmaps_key') || '';
 });
+$('#cancelKey').addEventListener('click', ()=>{
+  $('#setup').style.display='none';
+  $('#main').style.display='block';
+});
+window.gm_authFailure = function(){
+  clearTimeout(window.__gmapsFail);
+  $('#main').style.display='none';
+  $('#cancelKey').style.display='none';
+  $('#setup').style.display='block';
+  $('#setup').insertAdjacentHTML('afterbegin',
+    '<div class="msg err" style="margin-bottom:14px">\u26a0\ufe0f Google \u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18 API Key (\u0e04\u0e35\u0e22\u0e4c\u0e1c\u0e34\u0e14/\u0e42\u0e14\u0e40\u0e21\u0e19\u0e44\u0e21\u0e48\u0e15\u0e23\u0e07/\u0e42\u0e04\u0e27\u0e15\u0e32\u0e40\u0e15\u0e47\u0e21) \u2014 \u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e43\u0e19 Google Cloud Console</div>');
+};
 
 // ---------- load Google Maps JS ----------
 function loadGoogle(key){
@@ -199,8 +216,12 @@ window.initApp = function(){
     if(p && p.geometry){ chosenPlace = p; run(); }
   });
 
+  $('#go').addEventListener('click', run);
+  $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') run(); });
+  $('#q').addEventListener('input', ()=>{ chosenPlace = null; });
+
   $('#rate').value = localStorage.getItem('cm_rate') || '';
-  $('#rate').addEventListener('input', ()=> localStorage.setItem('cm_rate', $('#rate').value));
+  $('#rate').addEventListener('input', ()=> lsSet('cm_rate', $('#rate').value));
   renderHist();
 };
 
@@ -229,7 +250,7 @@ function run(){
   }, (res, status)=>{
     busy = false; $('#go').disabled = false;
     if(status !== 'OK' || !res.routes.length){
-      $('#result').innerHTML = `<div class="msg err">\u0e2b\u0e32\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 (${status}) \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07</div>`;
+      $('#result').innerHTML = `<div class="msg err">\u0e2b\u0e32\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 (${esc(status)}) \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07</div>`;
       return;
     }
     const leg = res.routes[0].legs[0];
@@ -240,6 +261,7 @@ function run(){
 function showResult(p, leg, dest){
   const rate = parseFloat($('#rate').value);
   const km = leg.distance.value/1000;
+  const kmText = km.toLocaleString('th-TH',{maximumFractionDigits:1});
   const cost = (rate>0)
     ? `<div class="metric cost"><div class="k">\ud83d\udcb0 \u0e04\u0e48\u0e32\u0e2a\u0e48\u0e07\u0e42\u0e14\u0e22\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13 (${rate.toLocaleString('th-TH')} \u0e1a\u0e32\u0e17/\u0e01\u0e21.)</div>
          <div class="v">${Math.round(km*rate).toLocaleString('th-TH')}<span class="u">\u0e1a\u0e32\u0e17</span></div></div>` : '';
@@ -247,11 +269,11 @@ function showResult(p, leg, dest){
              + `&destination=${dest.lat()},${dest.lng()}&travelmode=driving`;
   $('#result').innerHTML = `
     <div class="result-card">
-      <div class="found-name">\ud83d\udccd ${p.name || '\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07'}</div>
-      <div class="found-sub">${p.formatted_address || ''}</div>
+      <div class="found-name">\ud83d\udccd ${esc(p.name || '\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07')}</div>
+      <div class="found-sub">${esc(p.formatted_address || '')}</div>
       <div class="metrics">
         <div class="metric"><div class="k">\ud83d\udccf \u0e23\u0e30\u0e22\u0e30\u0e17\u0e32\u0e07</div>
-          <div class="v">${leg.distance.text.replace(' \u0e01\u0e21.','').replace(' km','')}<span class="u">\u0e01\u0e21.</span></div></div>
+          <div class="v">${kmText}<span class="u">\u0e01\u0e21.</span></div></div>
         <div class="metric"><div class="k">\u23f1\ufe0f \u0e40\u0e27\u0e25\u0e32\u0e42\u0e14\u0e22\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13</div>
           <div class="v" style="font-size:20px">${fmtEta(leg.duration.value)}</div></div>
         ${cost}
@@ -267,14 +289,14 @@ function getHist(){ try{ return JSON.parse(localStorage.getItem('cm_hist')||'[]'
 function saveHist(item){
   let h = getHist().filter(x=> x.q!==item.q || x.addr!==item.addr);
   h.unshift(item); h = h.slice(0,8);
-  localStorage.setItem('cm_hist', JSON.stringify(h)); renderHist();
+  lsSet('cm_hist', JSON.stringify(h)); renderHist();
 }
 function renderHist(){
   const h = getHist(), wrap = $('#histWrap'), box = $('#hist');
   if(!h.length){ wrap.style.display='none'; return; }
   wrap.style.display='block';
   box.innerHTML = h.map((x,i)=>`<div class="chip" data-i="${i}">
-      <span class="q">${x.q||x.addr}</span><span class="d">${x.km} \u0e01\u0e21.</span></div>`).join('');
+      <span class="q">${esc(x.q||x.addr)}</span><span class="d">${esc(x.km)} \u0e01\u0e21.</span></div>`).join('');
   box.querySelectorAll('.chip').forEach(c=>{
     c.addEventListener('click', ()=>{
       const x = getHist()[+c.dataset.i];
