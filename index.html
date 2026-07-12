@@ -352,13 +352,13 @@ function sumLegs(res){ let d=0,t=0; res.routes[0].legs.forEach(l=>{ d+=l.distanc
 
 let routeMap=null, routeDR=null;
 function showRouteOn(res, anchorEl){
+  anchorEl.insertAdjacentElement('afterend', $('#mapWrap'));
+  $('#mapWrap').style.display='block';
   if(!routeMap){
     routeMap = new google.maps.Map($('#routeMap'), { center:ORIGIN, zoom:11,
       mapTypeControl:false, streetViewControl:false, fullscreenControl:false });
     routeDR = new google.maps.DirectionsRenderer({ map:routeMap });
   }
-  anchorEl.insertAdjacentElement('afterend', $('#mapWrap'));
-  $('#mapWrap').style.display='block';
   routeDR.setDirections(res);
   google.maps.event.trigger(routeMap,'resize');
   if(res.routes[0].bounds) routeMap.fitBounds(res.routes[0].bounds);
