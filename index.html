@@ -147,7 +147,8 @@ const $ = s => document.querySelector(s);
 let map, directionsSvc, autocomplete, chosenPlace = null;
 
 // ---------- key handling ----------
-function getKey(){ return localStorage.getItem('gmaps_key') || ''; }
+const EMBEDDED_KEY='AIzaSyCGZPq5TPVpjJCTluYew5SmYIYWSQ7KQtA';
+function getKey(){ return localStorage.getItem('gmaps_key') || EMBEDDED_KEY; }
 function boot(){
   const k = getKey();
   if(!k){ $('#setup').style.display='block'; $('#main').style.display='none'; return; }
