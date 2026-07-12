@@ -79,6 +79,12 @@
   .chip:active{background:var(--card2)}
   .chip .q{font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .chip .d{font-size:13px; font-weight:700; color:var(--accent); flex:0 0 auto}
+  .multi{margin-top:24px; border-top:1px dashed var(--line); padding-top:18px}
+  .multi .m-h{font-size:14px; font-weight:700; margin-bottom:4px}
+  .multi .m-s{font-size:11.5px; color:var(--muted); margin-bottom:10px; line-height:1.5}
+  .multi input{margin-bottom:8px}
+  .win{background:rgba(51,196,107,.12); border:1px solid rgba(51,196,107,.35); color:var(--accent2);
+    border-radius:12px; padding:10px 12px; margin-top:10px; font-size:14px; font-weight:600; text-align:center}
   footer{margin-top:26px; text-align:center; font-size:11px; color:var(--muted); line-height:1.6}
 
   /* setup card */
@@ -126,6 +132,16 @@
   </div>
 
   <div id="result"></div>
+
+  <div class="multi">
+    <div class="m-h">&#128666; &#3648;&#3607;&#3637;&#3618;&#3610;&#3648;&#3607;&#3637;&#3656;&#3618;&#3623;&#3626;&#3656;&#3591; 2&#8211;3 &#3592;&#3640;&#3604;</div>
+    <div class="m-s">&#3623;&#3636;&#3656;&#3591;&#3614;&#3656;&#3623;&#3591;&#3605;&#3656;&#3629;&#3585;&#3633;&#3609; (&#3619;&#3657;&#3634;&#3609;&#8594;1&#8594;2&#8594;3&#8594;&#3585;&#3621;&#3633;&#3610;&#3619;&#3657;&#3634;&#3609;) vs &#3649;&#3618;&#3585;&#3648;&#3607;&#3637;&#3656;&#3618;&#3623;&#3585;&#3621;&#3633;&#3610;&#3619;&#3657;&#3634;&#3609;&#3607;&#3640;&#3585;&#3592;&#3640;&#3604; &#8212; &#3623;&#3636;&#3656;&#3591;&#3605;&#3634;&#3617;&#3621;&#3635;&#3604;&#3633;&#3610;&#3607;&#3637;&#3656;&#3585;&#3619;&#3629;&#3585;</div>
+    <input type="text" id="d1" autocomplete="off" placeholder="&#3592;&#3640;&#3604;&#3607;&#3637;&#3656; 1 &#8212; &#3614;&#3636;&#3617;&#3614;&#3660;&#3649;&#3621;&#3657;&#3623;&#3648;&#3621;&#3639;&#3629;&#3585;&#3592;&#3634;&#3585;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;">
+    <input type="text" id="d2" autocomplete="off" placeholder="&#3592;&#3640;&#3604;&#3607;&#3637;&#3656; 2 &#8212; &#3614;&#3636;&#3617;&#3614;&#3660;&#3649;&#3621;&#3657;&#3623;&#3648;&#3621;&#3639;&#3629;&#3585;&#3592;&#3634;&#3585;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;">
+    <input type="text" id="d3" autocomplete="off" placeholder="&#3592;&#3640;&#3604;&#3607;&#3637;&#3656; 3 (&#3652;&#3617;&#3656;&#3610;&#3633;&#3591;&#3588;&#3633;&#3610;)">
+    <button class="go" id="cmp">&#3648;&#3607;&#3637;&#3618;&#3610;&#3648;&#3626;&#3657;&#3609;&#3607;&#3634;&#3591;</button>
+    <div id="cmpResult"></div>
+  </div>
 
   <div id="histWrap" style="display:none">
     <div class="hist-h"><span>&#3588;&#3657;&#3609;&#3621;&#3656;&#3634;&#3626;&#3640;&#3604;</span><button id="clearHist">&#3621;&#3657;&#3634;&#3591;</button></div>
@@ -220,6 +236,17 @@ window.initApp = function(){
   $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') run(); });
   $('#q').addEventListener('input', ()=>{ chosenPlace = null; });
 
+  [['#d1',0],['#d2',1],['#d3',2]].forEach(([sel,i])=>{
+    const el = $(sel);
+    const ac = new google.maps.places.Autocomplete(el, {
+      componentRestrictions:{ country:'th' },
+      bounds, fields:['name','formatted_address','geometry']
+    });
+    ac.addListener('place_changed', ()=>{ const p = ac.getPlace(); if(p && p.geometry) mp[i]=p; });
+    el.addEventListener('input', ()=>{ mp[i]=null; });
+  });
+  $('#cmp').addEventListener('click', compare);
+
   $('#rate').value = localStorage.getItem('cm_rate') || '';
   $('#rate').addEventListener('input', ()=> lsSet('cm_rate', $('#rate').value));
   renderHist();
@@ -308,6 +335,69 @@ function renderHist(){
   });
 }
 $('#clearHist').addEventListener('click', ()=>{ localStorage.removeItem('cm_hist'); renderHist(); });
+
+
+// ---------- multi-stop compare ----------
+const mp = [null,null,null];
+let cmpBusy = false;
+const fmtKm = m => (m/1000).toLocaleString('th-TH',{maximumFractionDigits:1});
+function routeP(req){ return new Promise((ok,bad)=> directionsSvc.route(req,(res,st)=> (st==='OK'&&res.routes.length)?ok(res):bad(st))); }
+function sumLegs(res){ let d=0,t=0; res.routes[0].legs.forEach(l=>{ d+=l.distance.value; t+=l.duration.value; }); return {d,t}; }
+
+async function compare(){
+  if(cmpBusy) return;
+  const pts = mp.filter(Boolean);
+  if(pts.length < 2){
+    $('#cmpResult').innerHTML = `<div class="msg err">\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22 2 \u0e08\u0e38\u0e14 \u0e42\u0e14\u0e22\u0e1e\u0e34\u0e21\u0e1e\u0e4c\u0e41\u0e25\u0e49\u0e27<b>\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48\u0e40\u0e14\u0e49\u0e07\u0e02\u0e36\u0e49\u0e19</b>\u0e17\u0e35\u0e25\u0e30\u0e0a\u0e48\u0e2d\u0e07\u0e04\u0e23\u0e31\u0e1a</div>`;
+    return;
+  }
+  cmpBusy = true; $('#cmp').disabled = true;
+  $('#cmpResult').innerHTML = `<div class="msg load"><span class="spin"></span>\u0e01\u0e33\u0e25\u0e31\u0e07\u0e04\u0e33\u0e19\u0e27\u0e13\u0e40\u0e17\u0e35\u0e22\u0e1a 2 \u0e41\u0e1a\u0e1a...</div>`;
+  try{
+    const wp = p => ({ location:p.geometry.location, stopover:true });
+    const reqs = [
+      { origin:ORIGIN, destination:ORIGIN, travelMode:google.maps.TravelMode.DRIVING, waypoints:pts.map(wp) },
+      ...pts.map(p => ({ origin:ORIGIN, destination:ORIGIN, travelMode:google.maps.TravelMode.DRIVING, waypoints:[wp(p)] }))
+    ];
+    const [chainRes, ...starRes] = await Promise.all(reqs.map(routeP));
+    const chain = sumLegs(chainRes);
+    const parts = starRes.map(sumLegs);
+    const star = { d:parts.reduce((a,x)=>a+x.d,0), t:parts.reduce((a,x)=>a+x.t,0) };
+
+    const rate = parseFloat($('#rate').value);
+    const names = pts.map(p=>esc(p.name||''));
+    const legKm = chainRes.routes[0].legs.map(l=>fmtKm(l.distance.value)).join(' / ');
+    const partLines = pts.map((p,i)=>`${names[i]}: \u0e44\u0e1b-\u0e01\u0e25\u0e31\u0e1a ${fmtKm(parts[i].d)} \u0e01\u0e21.`).join('<br>');
+    const sv = star.d - chain.d;
+    const baht = (rate>0) ? ` \u2248 ${Math.round(sv/1000*rate).toLocaleString('th-TH')} \u0e1a\u0e32\u0e17` : '';
+    const winLine = sv > 100
+      ? `\u2705 \u0e27\u0e34\u0e48\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14\u0e01\u0e27\u0e48\u0e32 ${fmtKm(sv)} \u0e01\u0e21.${baht}`
+      : `\u2696\ufe0f \u0e2a\u0e2d\u0e07\u0e41\u0e1a\u0e1a\u0e43\u0e01\u0e25\u0e49\u0e40\u0e04\u0e35\u0e22\u0e07\u0e01\u0e31\u0e19 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e41\u0e1a\u0e1a\u0e44\u0e2b\u0e19\u0e01\u0e47\u0e44\u0e14\u0e49`;
+    const wps = pts.map(p=>p.geometry.location.lat()+','+p.geometry.location.lng()).join('|');
+    const gmap = `https://www.google.com/maps/dir/?api=1&origin=${ORIGIN.lat},${ORIGIN.lng}&destination=${ORIGIN.lat},${ORIGIN.lng}&waypoints=${encodeURIComponent(wps)}&travelmode=driving`;
+
+    $('#cmpResult').innerHTML = `
+      <div class="result-card">
+        <div class="found-name">\ud83d\ude9a \u0e1c\u0e25\u0e40\u0e17\u0e35\u0e22\u0e1a\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e2a\u0e48\u0e07 (${pts.length} \u0e08\u0e38\u0e14)</div>
+        <div class="found-sub">\u0e23\u0e49\u0e32\u0e19 \u2192 ${names.join(' \u2192 ')} \u2192 \u0e23\u0e49\u0e32\u0e19 (${legKm} \u0e01\u0e21.)</div>
+        <div class="metrics">
+          <div class="metric"><div class="k">\ud83d\udd17 \u0e27\u0e34\u0e48\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e23\u0e27\u0e14\u0e40\u0e14\u0e35\u0e22\u0e27</div>
+            <div class="v" style="font-size:20px">${fmtKm(chain.d)}<span class="u">\u0e01\u0e21.</span></div>
+            <div class="k">${fmtEta(chain.t)}</div></div>
+          <div class="metric"><div class="k">\ud83d\udd01 \u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e01\u0e25\u0e31\u0e1a\u0e23\u0e49\u0e32\u0e19</div>
+            <div class="v" style="font-size:20px">${fmtKm(star.d)}<span class="u">\u0e01\u0e21.</span></div>
+            <div class="k">${fmtEta(star.t)}</div></div>
+        </div>
+        <div class="found-sub" style="margin:10px 0 0">${partLines}</div>
+        <div class="win">${winLine}</div>
+        <a class="maplink" href="${gmap}" target="_blank" rel="noopener">\ud83d\uddfa\ufe0f \u0e40\u0e1b\u0e34\u0e14\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e43\u0e19 Google Maps</a>
+      </div>`;
+  }catch(st){
+    $('#cmpResult').innerHTML = `<div class="msg err">\u0e2b\u0e32\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 (${esc(String(st))}) \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07</div>`;
+  }finally{
+    cmpBusy = false; $('#cmp').disabled = false;
+  }
+}
 
 boot();
 </script>
