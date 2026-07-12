@@ -407,6 +407,17 @@ function showRouteOn(res, anchorEl){
     routeMap = new google.maps.Map($('#routeMap'), { center:ORIGIN, zoom:11,
       mapTypeControl:false, streetViewControl:false, fullscreenControl:false });
     routeDR = new google.maps.DirectionsRenderer({ map:routeMap });
+    fetch('boundaries.json').then(r=>r.json()).then(gj=>{
+      routeMap.data.addGeoJson(gj);
+      routeMap.data.setStyle({ strokeColor:'#e67e00', strokeOpacity:.75, strokeWeight:1.3,
+        fillColor:'#e67e00', fillOpacity:.03 });
+      const iw = new google.maps.InfoWindow();
+      routeMap.data.addListener('click', e=>{
+        const t = e.feature.getProperty('t')||'', a = e.feature.getProperty('a')||'';
+        iw.setContent('<div style="font-weight:700;color:#16202b">'+esc(t)+'</div><div style="font-size:12px;color:#5f7085">'+esc(a)+'</div>');
+        iw.setPosition(e.latLng); iw.open(routeMap);
+      });
+    }).catch(e=>{});
   }
   routeDR.setDirections(res);
   google.maps.event.trigger(routeMap,'resize');
