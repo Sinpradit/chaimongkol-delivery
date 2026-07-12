@@ -128,7 +128,7 @@
   <input type="text" id="q" inputmode="text" enterkeyhint="search" autocomplete="off"
     placeholder="&#3648;&#3594;&#3656;&#3609; &#3610;&#3657;&#3634;&#3609;&#3650;&#3609;&#3609;&#3626;&#3633;&#3591; &#3605;&#3635;&#3610;&#3621;&#3650;&#3609;&#3609;&#3626;&#3633;&#3591; &#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660;">
   <button class="go" id="go">&#3588;&#3635;&#3609;&#3623;&#3603;&#3619;&#3632;&#3618;&#3632;&#3607;&#3634;&#3591;</button>
-  <div class="hint">&#3614;&#3636;&#3617;&#3614;&#3660;&#3616;&#3634;&#3625;&#3634;&#3652;&#3607;&#3618;&#3652;&#3604;&#3657;&#3648;&#3621;&#3618; &#3619;&#3632;&#3610;&#3610;&#3592;&#3632;&#3648;&#3604;&#3657;&#3591;&#3594;&#3639;&#3656;&#3629;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609;&#3651;&#3627;&#3657;&#3648;&#3621;&#3639;&#3629;&#3585; &#183; &#3588;&#3619;&#3629;&#3610;&#3588;&#3621;&#3640;&#3617;&#3607;&#3633;&#3656;&#3623;&#3652;&#3607;&#3618; (&#3648;&#3609;&#3657;&#3609;&#3649;&#3606;&#3610;&#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660;&#8211;&#3624;&#3619;&#3637;&#3626;&#3632;&#3648;&#3585;&#3625;&#8211;&#3629;&#3640;&#3610;&#3621;&#3631;)</div>
+  <div class="hint">&#3614;&#3636;&#3617;&#3614;&#3660;&#3616;&#3634;&#3625;&#3634;&#3652;&#3607;&#3618;&#3652;&#3604;&#3657;&#3648;&#3621;&#3618; &#3619;&#3632;&#3610;&#3610;&#3592;&#3632;&#3648;&#3604;&#3657;&#3591;&#3594;&#3639;&#3656;&#3629;&#3627;&#3617;&#3641;&#3656;&#3610;&#3657;&#3634;&#3609;&#3651;&#3627;&#3657;&#3648;&#3621;&#3639;&#3629;&#3585; &#183; &#3648;&#3593;&#3614;&#3634;&#3632;&#3614;&#3639;&#3657;&#3609;&#3607;&#3637;&#3656;: &#3585;&#3633;&#3609;&#3607;&#3619;&#3634;&#3619;&#3617;&#3618;&#3660; &#183; &#3618;&#3634;&#3591;&#3594;&#3640;&#3617;&#3609;&#3657;&#3629;&#3618; &#183; &#3609;&#3657;&#3635;&#3648;&#3585;&#3621;&#3637;&#3657;&#3618;&#3591; &#183; &#3648;&#3586;&#3639;&#3656;&#3629;&#3591;&#3651;&#3609; &#183; &#3627;&#3657;&#3623;&#3618;&#3586;&#3632;&#3618;&#3640;&#3591;</div>
 
   <div class="rate-row">
     <span class="rate-lbl">&#3648;&#3619;&#3605;&#3588;&#3656;&#3634;&#3626;&#3656;&#3591; (&#3610;&#3634;&#3607;/&#3585;&#3617;.) &#8212; &#3651;&#3626;&#3656;&#3606;&#3657;&#3634;&#3629;&#3618;&#3634;&#3585;&#3651;&#3627;&#3657;&#3588;&#3636;&#3604;&#3588;&#3656;&#3634;&#3626;&#3656;&#3591;&#3651;&#3627;&#3657;</span>
@@ -163,11 +163,14 @@
 
 <script>
 const ORIGIN = { lat: 15.1059584, lng: 104.5785245 };
-const REGION = { south:14.55, west:104.05, north:15.80, east:105.20 }; // bias autocomplete
+const REGION = { south:14.80, west:104.30, north:15.58, east:104.75 }; // strict service area
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+const ALLOWED_AREAS = ['\u0e01\u0e31\u0e19\u0e17\u0e23\u0e32\u0e23\u0e21\u0e22\u0e4c','\u0e22\u0e32\u0e07\u0e0a\u0e38\u0e21\u0e19\u0e49\u0e2d\u0e22','\u0e19\u0e49\u0e33\u0e40\u0e01\u0e25\u0e35\u0e49\u0e22\u0e07','\u0e40\u0e02\u0e37\u0e48\u0e2d\u0e07\u0e43\u0e19','\u0e2b\u0e49\u0e27\u0e22\u0e02\u0e30\u0e22\u0e38\u0e07'];
+const inArea = p => ALLOWED_AREAS.some(a => ((p.formatted_address||'')+(p.name||'')).includes(a));
+const outAreaMsg = n => `<div class="msg err">\u274c ${esc(n)} \u0e2d\u0e22\u0e39\u0e48\u0e19\u0e2d\u0e01\u0e1e\u0e37\u0e49\u0e19\u0e17\u0e35\u0e48\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23 \u2014 \u0e23\u0e2d\u0e07\u0e23\u0e31\u0e1a\u0e40\u0e09\u0e1e\u0e32\u0e30 ${ALLOWED_AREAS.join(' / ')}</div>`;
 let map, directionsSvc, autocomplete, chosenPlace = null;
 
 // ---------- key handling ----------
@@ -229,12 +232,15 @@ window.initApp = function(){
     new google.maps.LatLng(REGION.south, REGION.west),
     new google.maps.LatLng(REGION.north, REGION.east));
   autocomplete = new google.maps.places.Autocomplete($('#q'), {
-    componentRestrictions:{ country:'th' },
+    componentRestrictions:{ country:'th' }, strictBounds:true,
     bounds, fields:['name','formatted_address','geometry']
   });
   autocomplete.addListener('place_changed', ()=>{
     const p = autocomplete.getPlace();
-    if(p && p.geometry){ chosenPlace = p; run(); }
+    if(p && p.geometry){
+      if(!inArea(p)){ chosenPlace = null; $('#result').innerHTML = outAreaMsg(p.name||p.formatted_address||''); return; }
+      chosenPlace = p; run();
+    }
   });
 
   $('#go').addEventListener('click', run);
@@ -244,10 +250,16 @@ window.initApp = function(){
   [['#d1',0],['#d2',1],['#d3',2]].forEach(([sel,i])=>{
     const el = $(sel);
     const ac = new google.maps.places.Autocomplete(el, {
-      componentRestrictions:{ country:'th' },
+      componentRestrictions:{ country:'th' }, strictBounds:true,
       bounds, fields:['name','formatted_address','geometry']
     });
-    ac.addListener('place_changed', ()=>{ const p = ac.getPlace(); if(p && p.geometry) mp[i]=p; });
+    ac.addListener('place_changed', ()=>{
+      const p = ac.getPlace();
+      if(p && p.geometry){
+        if(!inArea(p)){ mp[i]=null; $('#cmpResult').innerHTML = outAreaMsg(p.name||''); return; }
+        mp[i]=p;
+      }
+    });
     el.addEventListener('input', ()=>{ mp[i]=null; });
   });
   $('#cmp').addEventListener('click', compare);
@@ -333,6 +345,7 @@ function renderHist(){
   box.querySelectorAll('.chip').forEach(c=>{
     c.addEventListener('click', ()=>{
       const x = getHist()[+c.dataset.i];
+      if(!inArea({formatted_address:x.addr, name:x.q})){ $('#result').innerHTML = outAreaMsg(x.q||x.addr||''); return; }
       chosenPlace = { name:x.q, formatted_address:x.addr,
         geometry:{ location:new google.maps.LatLng(x.lat, x.lng) } };
       $('#q').value = x.q; run();
