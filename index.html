@@ -87,6 +87,8 @@
     border-radius:12px; padding:10px 12px; margin-top:10px; font-size:14px; font-weight:600; text-align:center}
   .win.split{background:rgba(255,176,32,.12); border-color:rgba(255,176,32,.4); color:var(--accent)}
   .win.mid{background:var(--card2); border-color:var(--line); color:var(--muted)}
+  #mapWrap{margin-top:10px; border:1px solid var(--line); border-radius:14px; overflow:hidden; display:none}
+  #routeMap{height:280px; width:100%}
   footer{margin-top:26px; text-align:center; font-size:11px; color:var(--muted); line-height:1.6}
 
   /* setup card */
@@ -143,6 +145,7 @@
     <input type="text" id="d3" autocomplete="off" placeholder="&#3592;&#3640;&#3604;&#3607;&#3637;&#3656; 3 (&#3652;&#3617;&#3656;&#3610;&#3633;&#3591;&#3588;&#3633;&#3610;)">
     <button class="go" id="cmp">&#3648;&#3607;&#3637;&#3618;&#3610;&#3648;&#3626;&#3657;&#3609;&#3607;&#3634;&#3591;</button>
     <div id="cmpResult"></div>
+    <div id="mapWrap"><div id="routeMap"></div></div>
   </div>
 
   <div id="histWrap" style="display:none">
@@ -284,6 +287,7 @@ function run(){
     }
     const leg = res.routes[0].legs[0];
     showResult(p, leg, dest);
+    showRouteOn(res, $('#result'));
   });
 }
 
@@ -346,18 +350,18 @@ const fmtKm = m => (m/1000).toLocaleString('th-TH',{maximumFractionDigits:1});
 function routeP(req){ return new Promise((ok,bad)=> directionsSvc.route(req,(res,st)=> (st==='OK'&&res.routes.length)?ok(res):bad(st))); }
 function sumLegs(res){ let d=0,t=0; res.routes[0].legs.forEach(l=>{ d+=l.distance.value; t+=l.duration.value; }); return {d,t}; }
 
-function distM(a, b){
-  const R=6371000, r=Math.PI/180;
-  const dLa=(b.lat-a.lat)*r, dLo=(b.lng-a.lng)*r;
-  const h=Math.sin(dLa/2)**2 + Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;
-  return 2*R*Math.asin(Math.sqrt(h));
-}
-function legMinDistToShop(leg){
-  let m=Infinity;
-  (leg.steps||[]).forEach(st=> (st.path||[]).forEach(pt=>{
-    const d=distM({lat:pt.lat(),lng:pt.lng()}, ORIGIN); if(d<m) m=d;
-  }));
-  return m;
+let routeMap=null, routeDR=null;
+function showRouteOn(res, anchorEl){
+  if(!routeMap){
+    routeMap = new google.maps.Map($('#routeMap'), { center:ORIGIN, zoom:11,
+      mapTypeControl:false, streetViewControl:false, fullscreenControl:false });
+    routeDR = new google.maps.DirectionsRenderer({ map:routeMap });
+  }
+  anchorEl.insertAdjacentElement('afterend', $('#mapWrap'));
+  $('#mapWrap').style.display='block';
+  routeDR.setDirections(res);
+  google.maps.event.trigger(routeMap,'resize');
+  if(res.routes[0].bounds) routeMap.fitBounds(res.routes[0].bounds);
 }
 
 async function compare(){
@@ -385,22 +389,30 @@ async function compare(){
     const legKm = chainRes.routes[0].legs.map(l=>fmtKm(l.distance.value)).join(' / ');
     const partLines = pts.map((p,i)=>`${names[i]}: \u0e44\u0e1b-\u0e01\u0e25\u0e31\u0e1a ${fmtKm(parts[i].d)} \u0e01\u0e21.`).join('<br>');
     const sv = star.d - chain.d;
-    const svPct = star.d > 0 ? sv/star.d : 0;
     const baht = (rate>0 && sv>0) ? ` \u2248 ${Math.round(sv/1000*rate).toLocaleString('th-TH')} \u0e1a\u0e32\u0e17` : '';
-    const midLegs = chainRes.routes[0].legs.slice(1,-1);
-    const passesBase = midLegs.some(l => legMinDistToShop(l) < 1500);
+    const chainLegs = chainRes.routes[0].legs;
+    const outM = starRes.map(r => r.routes[0].legs[0].distance.value);
+    const pairs = [];
+    for(let i=1; i<pts.length; i++){
+      const hop = chainLegs[i].distance.value;
+      pairs.push({ a:i-1, b:i, hop, direct:outM[i], ok: hop < outM[i] });
+    }
+    const why = pairs.map(x => x.ok
+      ? `\u27a1\ufe0f ${names[x.a]} \u2192 ${names[x.b]} ${fmtKm(x.hop)} \u0e01\u0e21. \u0e43\u0e01\u0e25\u0e49\u0e01\u0e27\u0e48\u0e32\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e49\u0e32\u0e19\u0e43\u0e2b\u0e21\u0e48 (${fmtKm(x.direct)} \u0e01\u0e21.)`
+      : `\u21a9\ufe0f ${names[x.a]} \u2192 ${names[x.b]} ${fmtKm(x.hop)} \u0e01\u0e21. \u0e44\u0e01\u0e25\u0e01\u0e27\u0e48\u0e32\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e49\u0e32\u0e19\u0e43\u0e2b\u0e21\u0e48 (${fmtKm(x.direct)} \u0e01\u0e21.)`
+    ).join('<br>');
     let winClass = 'win', winLine;
-    if(passesBase){
+    if(pairs.every(x=>x.ok)){
+      winLine = `\u2705 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e27\u0e34\u0e48\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e40\u0e14\u0e35\u0e22\u0e27 \u2014 \u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14 ${fmtKm(Math.max(sv,0))} \u0e01\u0e21.${baht}`;
+    } else if(pairs.every(x=>!x.ok)){
       winClass = 'win split';
-      winLine = `\ud83d\udd01 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27 \u2014 \u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e23\u0e30\u0e2b\u0e27\u0e48\u0e32\u0e07\u0e08\u0e38\u0e14\u0e27\u0e34\u0e48\u0e07\u0e1c\u0e48\u0e32\u0e19\u0e2b\u0e19\u0e49\u0e32\u0e23\u0e49\u0e32\u0e19\u0e2d\u0e22\u0e39\u0e48\u0e41\u0e25\u0e49\u0e27 (\u0e1e\u0e48\u0e27\u0e07\u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14\u0e41\u0e04\u0e48 ${fmtKm(Math.max(sv,0))} \u0e01\u0e21.)`;
-    } else if(sv >= 8000 || (svPct >= 0.12 && sv >= 3000)){
-      winLine = `\u2705 \u0e42\u0e0b\u0e19\u0e40\u0e14\u0e35\u0e22\u0e27\u0e01\u0e31\u0e19 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e27\u0e34\u0e48\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e40\u0e14\u0e35\u0e22\u0e27 \u2014 \u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14 ${fmtKm(sv)} \u0e01\u0e21.${baht}`;
-    } else if(svPct < 0.06){
-      winClass = 'win split';
-      winLine = `\ud83d\udd01 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27 \u2014 \u0e04\u0e19\u0e25\u0e30\u0e17\u0e34\u0e28/\u0e23\u0e30\u0e22\u0e30\u0e23\u0e27\u0e21\u0e41\u0e17\u0e1a\u0e44\u0e21\u0e48\u0e15\u0e48\u0e32\u0e07\u0e01\u0e31\u0e19 (\u0e1e\u0e48\u0e27\u0e07\u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14\u0e41\u0e04\u0e48 ${fmtKm(Math.max(sv,0))} \u0e01\u0e21.)`;
+      winLine = `\ud83d\udd01 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27 \u2014 \u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d\u0e23\u0e30\u0e2b\u0e27\u0e48\u0e32\u0e07\u0e08\u0e38\u0e14\u0e44\u0e01\u0e25\u0e01\u0e27\u0e48\u0e32\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e49\u0e32\u0e19\u0e43\u0e2b\u0e21\u0e48`;
     } else {
-      winClass = 'win mid';
-      winLine = `\u2696\ufe0f \u0e01\u0e49\u0e33\u0e01\u0e36\u0e48\u0e07 \u2014 \u0e1e\u0e48\u0e27\u0e07\u0e1b\u0e23\u0e30\u0e2b\u0e22\u0e31\u0e14 ${fmtKm(sv)} \u0e01\u0e21.${baht} \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e15\u0e32\u0e21\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e30\u0e14\u0e27\u0e01`;
+      winClass = 'win split';
+      const mix = pairs[0].ok
+        ? `\u0e1e\u0e48\u0e27\u0e07 ${names[0]} \u2192 ${names[1]} \u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e40\u0e14\u0e35\u0e22\u0e27 \u0e41\u0e25\u0e49\u0e27\u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e44\u0e1b ${names[2]}`
+        : `\u0e41\u0e22\u0e01\u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e44\u0e1b ${names[0]} \u0e41\u0e25\u0e49\u0e27\u0e1e\u0e48\u0e27\u0e07 ${names[1]} \u2192 ${names[2]} \u0e40\u0e17\u0e35\u0e48\u0e22\u0e27\u0e40\u0e14\u0e35\u0e22\u0e27`;
+      winLine = `\ud83d\udd00 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e41\u0e1a\u0e1a\u0e1c\u0e2a\u0e21 \u2014 ${mix}`;
     }
     const wps = pts.map(p=>p.geometry.location.lat()+','+p.geometry.location.lng()).join('|');
     const gmap = `https://www.google.com/maps/dir/?api=1&origin=${ORIGIN.lat},${ORIGIN.lng}&destination=${ORIGIN.lat},${ORIGIN.lng}&waypoints=${encodeURIComponent(wps)}&travelmode=driving`;
@@ -417,10 +429,11 @@ async function compare(){
             <div class="v" style="font-size:20px">${fmtKm(star.d)}<span class="u">\u0e01\u0e21.</span></div>
             <div class="k">${fmtEta(star.t)}</div></div>
         </div>
-        <div class="found-sub" style="margin:10px 0 0">${partLines}</div>
+        <div class="found-sub" style="margin:10px 0 0">${partLines}<br>${why}</div>
         <div class="${winClass}">${winLine}</div>
         <a class="maplink" href="${gmap}" target="_blank" rel="noopener">\ud83d\uddfa\ufe0f \u0e40\u0e1b\u0e34\u0e14\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e1e\u0e48\u0e27\u0e07\u0e43\u0e19 Google Maps</a>
       </div>`;
+    showRouteOn(chainRes, $('#cmpResult'));
   }catch(st){
     $('#cmpResult').innerHTML = `<div class="msg err">\u0e2b\u0e32\u0e40\u0e2a\u0e49\u0e19\u0e17\u0e32\u0e07\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 (${esc(String(st))}) \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07</div>`;
   }finally{
