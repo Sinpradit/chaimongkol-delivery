@@ -408,12 +408,10 @@ function showRouteOn(res, anchorEl){
       mapId:'6c1c6bcdafebddcacf258db0',
       mapTypeControl:false, streetViewControl:false, fullscreenControl:false });
     routeDR = new google.maps.DirectionsRenderer({ map:routeMap });
-    ['LOCALITY','SUBLOCALITY_LEVEL_1'].forEach(ft=>{
-      try{
-        const fl = routeMap.getFeatureLayer(ft);
-        fl.style = ()=>({ strokeColor:'#e67e00', strokeOpacity:.85, strokeWeight:1.6, fillOpacity:0 });
-      }catch(e){}
-    });
+    try{
+      const fl = routeMap.getFeatureLayer(google.maps.FeatureType.LOCALITY);
+      fl.style = ()=>({ strokeColor:'#e67e00', strokeOpacity:.9, strokeWeight:1.8, fillColor:'#e67e00', fillOpacity:.05 });
+    }catch(e){}
   }
   routeDR.setDirections(res);
   google.maps.event.trigger(routeMap,'resize');
